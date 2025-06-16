@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mồi Săn Rắn</title>
+    <link rel="stylesheet" href="../ASSIGNMENT/style.css">
+    <style>
+        body { margin: 0; text-align: center; font-family: Arial, sans-serif; background: black; color: white; }
+        canvas { display: none; margin: 20px auto; background: #222; border: 2px solid #fff; }
+        #gameOver, #score { display: none; }
+
+        #pauseButton {
+            display: none;
+            margin: 10px auto; /* Thêm khoảng cách từ phần điểm */
+            padding: 10px 20px;
+            background-color: #f4a261;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+            position: relative;
+        }
+
+        #loginScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* căn giữa theo chiều dọc */
+    align-items: center;     /* căn giữa theo chiều ngang */
+    z-index: 2;
+}
+
+    .background-blur {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('../Mồi Săn Rắn.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px);
+            z-index: -2;
+        }
+        #loginScreen h1,
+        #loginScreen p {
+            color: black;
+            text-shadow: 0 0 4px white;
+        }
+        #loginScreen button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #f4a261;
+            color: black;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #feedbackSection p,
+        #feedbackSection button {
+            margin: 5px;
+        }
+
+        #feedbackSection button {
+            padding: 8px 16px;
+            font-size: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blur"></div>
+    <div id="loginScreen">
+        <h1 style="color: white;">Trò Chơi Mồi Săn Rắn</h1>
+        <img src="../Mồi Săn Rắn.jpg" alt="Background" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;">
+        <div style="position: relative; z-index: 1;">
+            <button onclick="startGame()">Bắt đầu</button>
+            <p style="color: white;">Điểm cao nhất: <span id="highScore" style="color: white;">0</span> - <span id="highPlayer" style="color: white;">Chưa có</span></p></p>
+        </div>
+    </div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="score">Điểm: <span id="currentScore">0</span></div>   
+    <div id="gameOver">
+        <h2>Bạn đã thua!</h2>
+        <p>Điểm của bạn: <span id="finalScore">0</span></p>
+        <button onclick="restartGame()">Chơi lại</button>
+        <button onclick="exitGame()">Thoát</button>
+
+        <div id="feedbackSection" style="margin-top: 20px;">
+            <p>Bạn có thích trò chơi này không?</p>
+            <button onclick="handleFeedback(true)">👍 Thích</button>
+            <button onclick="handleFeedback(false)">👎 Không thích</button>
+            <p id="thankYouMessage" style="display: none; margin-top: 10px; color: yellow;"></p>
+        </div>
+    </div>
+    <button id="pauseButton" onclick="togglePause()">Pause</button>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const box = 20;
+        let snake = [{ x: 200, y: 200 }];
+        let food = randomPosition();
+        let direction = "RIGHT";
+        let score = 0;
+        let playerName = "";
+        let gameInterval;
+        let isPaused = false;
+
+        const headImg = new Image();
+        headImg.src = "../sleep_9651139.png";
+
+        const bodyImg = new Image();
+        bodyImg.src = "../sleep_9651139.png";
+
+        const foodImg = new Image();
+        foodImg.src = "../chameleon_6973801.png";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Đảm bảo nút Pause được ẩn khi khởi tạo trang
+            document.getElementById("pauseButton").style.display = "none";
+        });
+
+        function randomPosition() {
+            return {
+                x: Math.floor(Math.random() * (canvas.width / box)) * box,
+                y: Math.floor(Math.random() * (canvas.height / box)) * box
+            };
+        }
+
+        function startGame() {
+            document.getElementById("loginScreen").style.display = "none";
+            canvas.style.display = "block";
+            document.getElementById("score").style.display = "block";
+            document.getElementById("pauseButton").style.display = "block";
+            document.addEventListener("keydown", changeDirection);
+            gameInterval = setInterval(updateGame, 100);
+}
+
+        function togglePause() {
+            if (isPaused) {
+                // Tiếp tục game
+                gameInterval = setInterval(updateGame, 100);
+                document.getElementById("pauseButton").innerText = "Pause";
+            } else {
+                // Tạm dừng game
+                clearInterval(gameInterval);
+                document.getElementById("pauseButton").innerText = "Resume";
+            }
+            isPaused = !isPaused;
+        }
+
+        function drawSnake() {
+            snake.forEach((part, index) => {
+                if (index === 0) {
+                    ctx.drawImage(headImg, part.x, part.y, box, box);
+                } else {
+                    ctx.drawImage(bodyImg, part.x, part.y, box, box);
+                }
+            });
+        }
+
+        function drawFood() {
+            ctx.drawImage(foodImg, food.x, food.y, box, box);
+        }
+
+        function changeDirection(event) {
+            const key = event.keyCode;
+            if (key === 37 && direction !== "RIGHT") direction = "LEFT";
+            else if (key === 38 && direction !== "DOWN") direction = "UP";
+            else if (key === 39 && direction !== "LEFT") direction = "RIGHT";
+            else if (key === 40 && direction !== "UP") direction = "DOWN";
+            canChangeDirection = false;
+        }
+
+        function updateGame() {
+            let head = { ...snake[0] };
+            if (direction === "LEFT") head.x -= box;
+            if (direction === "RIGHT") head.x += box;
+            if (direction === "UP") head.y -= box;
+            if (direction === "DOWN") head.y += box;
+
+            if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || snake.some(part => part.x === head.x && part.y === head.y)) {
+                gameOver();
+                return;
+            }
+
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                document.getElementById("currentScore").innerText = score;
+                food = randomPosition();
+            } else {
+                snake.pop();
+            }
+
+            snake.unshift(head);
+            drawGame();
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawSnake();
+            drawFood();
+        }
+
+        function gameOver() {
+            clearInterval(gameInterval);
+            document.getElementById("finalScore").innerText = score;
+            document.getElementById("gameOver").style.display = "block";
+            document.getElementById("pauseButton").style.display = "none"; // Ẩn nút Pause khi thua
+        }
+
+        function restartGame() {
+            snake = [{ x: 200, y: 200 }];
+            direction = "RIGHT";
+            score = 0;
+
+            document.getElementById("gameOver").style.display = "none";
+            document.getElementById("currentScore").innerText = score;
+            canvas.style.display = "block";
+            document.getElementById("score").style.display = "block";
+            document.getElementById("pauseButton").style.display = "block";
+            gameInterval = setInterval(updateGame, 100);
+
+            document.getElementById("thankYouMessage").style.display = "none";
+            document.getElementById("thankYouMessage").innerText = "";
+        }
+
+        function exitGame() {
+            document.getElementById("gameOver").style.display = "none";
+            canvas.style.display = "none";
+            document.getElementById("score").style.display = "none";
+            document.getElementById("loginScreen").style.display = "block";
+            document.getElementById("pauseButton").style.display = "none";
+            snake = [{ x: 200, y: 200 }];
+            direction = "RIGHT";
+            score = 0;
+
+            document.getElementById("thankYouMessage").style.display = "none";
+            document.getElementById("thankYouMessage").innerText = "";
+        }
+        
+        function handleFeedback(isLiked) {
+            const message = isLiked 
+                ? "Cảm ơn bạn đã thích trò chơi!" 
+                : "Cảm ơn bạn đã góp ý!";
+            document.getElementById("thankYouMessage").innerText = message;
+            document.getElementById("thankYouMessage").style.display = "block";
+        }
+
+        document.addEventListener("keydown", changeDirection);
+    </script>
+</body>
+</html>
