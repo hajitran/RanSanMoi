@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi Rắn Săn Mồi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="nav">
+        <a href="trangchu.html">Trang Chủ</a>
+        <a href="gioithieu.html">Giới Thiệu</a>
+        <a href="gopy.html">Góp Ý</a>
+        <a href="hoidap.html">Hỏi Đáp</a>
+        <div class="user-menu">
+            <img src="image.png" alt="User Avatar" class="user-avatar" id="userAvatar">
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="dangnhap.html">Đăng Nhập</a>
+                <a href="dangky.html">Đăng Ký</a>
+            </div>
+        </div>
+        
+    </nav>
+    
+    <h1>Chào Mừng Bạn Đến Với Trò Chơi Mồi Săn Rắn</h1>
+
+    <img src="Mồi Săn Rắn.jpg" alt="Trò Chơi Mồi Săn Rắn" width="400" and height="300">
+
+    <div class="container">
+        <p>Nhấn nút bên dưới để bắt đầu chơi!</p>
+        <a href="rannn.html" class="btn">Chơi Ngay</a>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const avatar = document.getElementById("userAvatar");
+            const dropdown = document.getElementById("dropdownMenu");
+    
+            avatar.addEventListener("click", function () {
+                dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+            });
+    
+            // Đóng menu nếu click bên ngoài
+            document.addEventListener("click", function (event) {
+                if (!avatar.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.style.display = "none";
+                }
+            });
+        });
+    </script>
+    
+</body>
+</html>
